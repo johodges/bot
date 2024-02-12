@@ -45,6 +45,7 @@ echo "-o - specify GH_OWNER when uploading manuals. [default: $GH_OWNER]"
 echo "-r - specify GH_REPO when uploading manuals. [default: $GH_REPO]"
 echo "-R branch_name - clone fds, exp, fig, out and smv repos. fds and smv repos"
 echo "     will be checked out with a branch named 'branch_name'"
+echo "-S - scheduler to use, either SLURM or TORQUE. [default: SLURM]"
 echo "-T - only clone the fds and smv repos (this option is set by default when"
 echo "     only building apps (-B) and cloning repos (-R)"
 echo "-V option - if option is 'all' run all validation cases 1 time step, otherwise"
@@ -211,10 +212,11 @@ FDS_TAG=
 SMV_TAG=
 VALIDATION=
 OPENMPTEST=
+RESOURCE_MANAGER=
 
 #*** parse command line options
 
-while getopts 'bBcCdDfFhHJkm:MnNo:OPq:r:R:TuUvV:w:W:x:X:y:Y:' OPTION
+while getopts 'bBcCdDfFhHJkm:MnNo:OPq:r:R:S:TuUvV:w:W:x:X:y:Y:' OPTION
 do
 case $OPTION  in
   b)
@@ -283,6 +285,9 @@ case $OPTION  in
   R)
    CLONE_REPOS="$OPTARG"
    BRANCH=current
+   ;;
+  S)
+   RESOURCE_MANAGER="-S $OPTARG"
    ;;
   T)
     CLONE_FDSSMV="-T"
@@ -549,7 +554,7 @@ else
 fi
 touch $firebot_pid
 firebot_status=0
-$ECHO  ./firebot.sh -p $firebot_pid $UPDATEREPO $INTEL $OPENMPTEST $BUILD_ONLY $FORCECLONE $BRANCH $DEBUG_MODE $MANUALS_MATLAB_ONLY $FDS_REV $FDS_TAG $SMV_REV $SMV_TAG $UPLOADGUIDES $CLEANREPO $QUEUE $SKIPMATLAB $CLONE_REPOS $CLONE_FDSSMV $VALIDATION $EMAIL $WEB_ROOT $WEB_DIR "$@"
+$ECHO  ./firebot.sh -p $firebot_pid $UPDATEREPO $INTEL $OPENMPTEST $BUILD_ONLY $FORCECLONE $BRANCH $DEBUG_MODE $MANUALS_MATLAB_ONLY $FDS_REV $FDS_TAG $SMV_REV $SMV_TAG $UPLOADGUIDES $CLEANREPO $QUEUE $RESOURCE_MANAGER $SKIPMATLAB $CLONE_REPOS $CLONE_FDSSMV $VALIDATION $EMAIL $WEB_ROOT $WEB_DIR "$@"
 firebot_status=$?
 if [ -e $firebot_pid ]; then
   rm -f $firebot_pid
