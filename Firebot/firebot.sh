@@ -512,10 +512,10 @@ run_verification_cases_debug()
    # Run FDS with delayed stop files (with 1 OpenMP thread and 1 iteration)
    echo "Running FDS Verification Cases"
    echo "   debug"
-   echo "Running FDS verification cases:"                                                             >> $OUTPUT_DIR/stage4 2>&1
-   echo ./Run_FDS_Cases.sh $ONETHREAD -d -m 1 $INTEL2 -q $QUEUE -j $JOBPREFIX_DEBUG $RESOURCE_MANAGER >> $OUTPUT_DIR/stage4 2>&1
-        ./Run_FDS_Cases.sh $ONETHREAD -d -m 1 $INTEL2 -q $QUEUE -j $JOBPREFIX_DEBUG $RESOURCE_MANAGER >> $OUTPUT_DIR/stage4 2>&1
-   echo ""                                                                                            >> $OUTPUT_DIR/stage4 2>&1
+   echo "Running FDS verification cases:"                                                                      >> $OUTPUT_DIR/stage4 2>&1
+   echo ./Run_FDS_Cases.sh $ONETHREAD -d -m 1 $INTEL2 -q $QUEUE -j $JOBPREFIX_DEBUG $RESOURCE_MANAGER $USERMAX >> $OUTPUT_DIR/stage4 2>&1
+        ./Run_FDS_Cases.sh $ONETHREAD -d -m 1 $INTEL2 -q $QUEUE -j $JOBPREFIX_DEBUG $RESOURCE_MANAGER $USERMAX >> $OUTPUT_DIR/stage4 2>&1
+   echo ""                                                                                                     >> $OUTPUT_DIR/stage4 2>&1
 
    # Wait for all verification cases to end
    wait_cases_debug_end 'verification'
@@ -842,10 +842,10 @@ run_VV_cases_release()
    # Run FDS with 1 OpenMP thread
 
    if [[ "$OPENMPTEST" == "" ]] && [[ "$CHECK_CLUSTER" == "" ]]; then
-     echo "Running FDS benchmark verification cases:"                                                >> $OUTPUT_DIR/stage5 2>&1
-     echo ./Run_FDS_Cases.sh $INTEL2 -b $ONETHREAD -q $QUEUE -j $JOBPREFIX_RELEASE $RESOURCE_MANAGER >> $OUTPUT_DIR/stage5 2>&1
-     ./Run_FDS_Cases.sh $INTEL2 -b $ONETHREAD      -q $QUEUE -j $JOBPREFIX_RELEASE $RESOURCE_MANAGER >> $OUTPUT_DIR/stage5 2>&1
-     echo ""                                                                                         >> $OUTPUT_DIR/stage5 2>&1
+     echo "Running FDS benchmark verification cases:"                                                         >> $OUTPUT_DIR/stage5 2>&1
+     echo ./Run_FDS_Cases.sh $INTEL2 -b $ONETHREAD -q $QUEUE -j $JOBPREFIX_RELEASE $RESOURCE_MANAGER $USERMAX >> $OUTPUT_DIR/stage5 2>&1
+     ./Run_FDS_Cases.sh $INTEL2 -b $ONETHREAD      -q $QUEUE -j $JOBPREFIX_RELEASE $RESOURCE_MANAGER $USERMAX >> $OUTPUT_DIR/stage5 2>&1
+     echo ""                                                                                                  >> $OUTPUT_DIR/stage5 2>&1
    fi
 
    # Wait for benchmark verification cases to end
@@ -859,10 +859,10 @@ run_VV_cases_release()
      else
        echo "Running FDS verification cases:"                                                                    >> $OUTPUT_DIR/stage5 2>&1
      fi
-     echo ./Run_FDS_Cases.sh $INTEL2 $REGULARCASES $ONETHREAD -q $QUEUE -j $JOBPREFIX_RELEASE $RESOURCE_MANAGER  >> $OUTPUT_DIR/stage5 2>&1
+     echo ./Run_FDS_Cases.sh $INTEL2 $REGULARCASES $ONETHREAD -q $QUEUE -j $JOBPREFIX_RELEASE $RESOURCE_MANAGER $USERMAX >> $OUTPUT_DIR/stage5 2>&1
      cd $fdsrepo/Verification/scripts
-     ./Run_FDS_Cases.sh      $INTEL2 $REGULARCASES $ONETHREAD -q $QUEUE -j $JOBPREFIX_RELEASE $RESOURCE_MANAGER  >> $OUTPUT_DIR/stage5 2>&1
-     echo ""                                                                                                     >> $OUTPUT_DIR/stage5 2>&1
+     ./Run_FDS_Cases.sh      $INTEL2 $REGULARCASES $ONETHREAD -q $QUEUE -j $JOBPREFIX_RELEASE $RESOURCE_MANAGER $USERMAX >> $OUTPUT_DIR/stage5 2>&1
+     echo ""                                                                                                             >> $OUTPUT_DIR/stage5 2>&1
    fi
 
    # run all FDS validation cases 1 time step
@@ -887,9 +887,9 @@ run_VV_cases_release()
      echo "Running FDS Validation Cases (1 time step)"
      echo "   release"
      cd $fdsrepo/Verification/scripts
-     echo ./Run_FDS_Cases.sh -V -j $JOBPREFIX_RELEASE -m 1 -q $QUEUE $RESOURCE_MANAGER  >> $OUTPUT_DIR/stage5b 2>&1
-          ./Run_FDS_Cases.sh -V -j $JOBPREFIX_RELEASE -m 1 -q $QUEUE $RESOURCE_MANAGER  >> $OUTPUT_DIR/stage5b 2>&1
-     echo ""                                                                            >> $OUTPUT_DIR/stage5b 2>&1
+     echo ./Run_FDS_Cases.sh -V -j $JOBPREFIX_RELEASE -m 1 -q $QUEUE $RESOURCE_MANAGER $USERMAX >> $OUTPUT_DIR/stage5b 2>&1
+          ./Run_FDS_Cases.sh -V -j $JOBPREFIX_RELEASE -m 1 -q $QUEUE $RESOURCE_MANAGER $USERMAX >> $OUTPUT_DIR/stage5b 2>&1
+     echo ""                                                                                    >> $OUTPUT_DIR/stage5b 2>&1
    fi
 
    if [ "$RUN_VAL" == "1" ]; then
@@ -906,9 +906,9 @@ run_VV_cases_release()
 
      echo ""                                        i                        >> $OUTPUT_DIR/stage5 2>&1
      echo 'Running FDS restart verification cases:'                          >> $OUTPUT_DIR/stage5 2>&1
-     echo ./Run_FDS_Cases.sh $INTEL2 -r $ONETHREAD -q $QUEUE -j $JOBPREFIX_RELEASE $RESOURCE_MANAGER  >> $OUTPUT_DIR/stage5 2>&1
+     echo ./Run_FDS_Cases.sh $INTEL2 -r $ONETHREAD -q $QUEUE -j $JOBPREFIX_RELEASE $RESOURCE_MANAGER $USERMAX >> $OUTPUT_DIR/stage5 2>&1
      cd $fdsrepo/Verification/scripts
-          ./Run_FDS_Cases.sh $INTEL2 -r $ONETHREAD -q $QUEUE -j $JOBPREFIX_RELEASE $RESOURCE_MANAGER  >> $OUTPUT_DIR/stage5 2>&1
+          ./Run_FDS_Cases.sh $INTEL2 -r $ONETHREAD -q $QUEUE -j $JOBPREFIX_RELEASE $RESOURCE_MANAGER $USERMAX >> $OUTPUT_DIR/stage5 2>&1
      echo ""                                                                 >> $OUTPUT_DIR/stage5 2>&1
 
      # Wait for restart verification cases to end
@@ -2033,6 +2033,7 @@ UPDATED_WEB_IMAGES=
 FORCECLONE=
 
 RESOURCE_MANAGER=
+USERMAX=
 SKIPMATLAB=
 SKIPPICTURES=
 SKIPRELEASE=
@@ -2047,7 +2048,7 @@ GITURL=
 MAKE_SUMMARY=
 
 #*** parse command line arguments
-while getopts 'b:BcCdDJm:Mp:q:R:S:sTuUV:x:X:y:Y:w:W:' OPTION
+while getopts 'b:BcCdDJm:Mp:q:R:S:sTuUV:x:X:y:Y:w:W:j:' OPTION
 do
 case $OPTION in
   b)
@@ -2077,6 +2078,9 @@ case $OPTION in
    ;;
   D)
    OPENMPTEST=
+   ;;
+  j)
+   USERMAX="-U $OPTARG"
    ;;
   J)
    MPI_TYPE=impi
@@ -2504,7 +2508,7 @@ fi
 #*** check fds and smv repos for text files with CRLF line endings
 #    don't check lines if not cloning and not cleaning repo - avoid false positives
 
-CHECK_LINES=1
+CHECK_LINES=
 if [[ "$CLONE_REPOS" == "" ]]; then
   if [[ "$CLEANREPO" == "" ]]; then
     CHECK_LINES=

@@ -213,10 +213,11 @@ SMV_TAG=
 VALIDATION=
 OPENMPTEST=
 RESOURCE_MANAGER=
+USERMAX=
 
 #*** parse command line options
 
-while getopts 'bBcCdDfFhHJkm:MnNo:OPq:r:R:S:TuUvV:w:W:x:X:y:Y:' OPTION
+while getopts 'bBcCdDfFhHj:Jkm:MnNo:OPq:r:R:S:TuUvV:w:W:x:X:y:Y:' OPTION
 do
 case $OPTION  in
   b)
@@ -248,6 +249,9 @@ case $OPTION  in
    ;;
   H)
    usage -H;
+   ;;
+  j)
+   USERMAX="-j $OPTARG"
    ;;
   J)
    INTEL="-J"
@@ -554,7 +558,7 @@ else
 fi
 touch $firebot_pid
 firebot_status=0
-$ECHO  ./firebot.sh -p $firebot_pid $UPDATEREPO $INTEL $OPENMPTEST $BUILD_ONLY $FORCECLONE $BRANCH $DEBUG_MODE $MANUALS_MATLAB_ONLY $FDS_REV $FDS_TAG $SMV_REV $SMV_TAG $UPLOADGUIDES $CLEANREPO $QUEUE $RESOURCE_MANAGER $SKIPMATLAB $CLONE_REPOS $CLONE_FDSSMV $VALIDATION $EMAIL $WEB_ROOT $WEB_DIR "$@"
+$ECHO  ./firebot.sh -p $firebot_pid $UPDATEREPO $INTEL $OPENMPTEST $BUILD_ONLY $FORCECLONE $BRANCH $DEBUG_MODE $MANUALS_MATLAB_ONLY $FDS_REV $FDS_TAG $SMV_REV $SMV_TAG $UPLOADGUIDES $CLEANREPO $QUEUE $RESOURCE_MANAGER $USERMAX $SKIPMATLAB $CLONE_REPOS $CLONE_FDSSMV $VALIDATION $EMAIL $WEB_ROOT $WEB_DIR "$@"
 firebot_status=$?
 if [ -e $firebot_pid ]; then
   rm -f $firebot_pid
