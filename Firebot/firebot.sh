@@ -1077,7 +1077,11 @@ run_matlab_license_test()
    echo "   license test"
    # Run simple test to see if Matlab license is available
    cd $fdsrepo/Utilities/Matlab
-   matlab -nodisplay -r "try, disp('Running Matlab License Check'), catch, disp('License Error'), err = lasterror, err.message, err.stack, end, exit" &> $OUTPUT_DIR/stage7_matlab_license
+   date -Iseconds &> $OUTPUT_DIR/stage7_matlab_license
+#   strace -t -T -f -e trace=network -o $OUTPUT_DIR/stage7_matlab_strace matlab -nodisplay -r "try, disp('Running Matlab License Check'), catch, disp('License Error'), err = lasterror, err.message, err.stack, end, exit" >> $OUTPUT_DIR/stage7_matlab_license 2>&1
+   matlab -nodisplay -r "try, disp('Running Matlab License Check'), catch, disp('License Error'), err = lasterror, err.message, err.stack, end, exit" >> $OUTPUT_DIR/stage7_matlab_license 2>&1
+   date -Iseconds >> $OUTPUT_DIR/stage7_matlab_license 2>&1
+#   matlab -nodisplay -r "try, disp('Running Matlab License Check'), catch, disp('License Error'), err = lasterror, err.message, err.stack, end, exit" &> $OUTPUT_DIR/stage7_matlab_license
 }
 
 #---------------------------------------------
@@ -1759,15 +1763,21 @@ email_build_status()
       echo "Fortran: $IFORT_VERSION "                       >> $TIME_LOG
    fi
    echo ""                                                  >> $TIME_LOG
-   echo "$BOT_REVISION/$BOTBRANCH "    >> $TIME_LOG
+   echo "bot: $BOT_REVISION/$BOTBRANCH "    >> $TIME_LOG
    if [ "$CAD_REVISION" != "" ]; then
-     echo "$CAD_REVISION/$CADBRANCH  " >> $TIME_LOG
+     echo "cad: $CAD_REVISION/$CADBRANCH  " >> $TIME_LOG
    fi
-   echo "$EXP_REVISION/$EXPBRANCH "    >> $TIME_LOG
-   echo "$FDS_REVISION/$FDSBRANCH "    >> $TIME_LOG
-   echo "$FIG_REVISION/$FIGBRANCH "    >> $TIME_LOG
-   echo "$OUT_REVISION/$OUTBRANCH "    >> $TIME_LOG
-   echo "$SMV_REVISION/$SMVBRANCH "    >> $TIME_LOG
+   if [ "$EXP_REVISION" != "" ]; then
+     echo "exp: $EXP_REVISION/$EXPBRANCH "    >> $TIME_LOGa
+   fi
+   echo "fds: $FDS_REVISION/$FDSBRANCH "    >> $TIME_LOG
+   if [ "$FIG_REVISION" != "" ]; then
+     echo "fig: $FIG_REVISION/$FIGBRANCH "    >> $TIME_LOG
+   fi
+   if [ "$OUT_REVISION" != "" ]; then
+     echo "out: $OUT_REVISION/$OUTBRANCH "    >> $TIME_LOG
+   fi
+   echo "smv: $SMV_REVISION/$SMVBRANCH "    >> $TIME_LOG
    echo ""                                                  >> $TIME_LOG
    echo "start time: $start_time "                          >> $TIME_LOG
    echo "stop time: $stop_time "                            >> $TIME_LOG
@@ -1849,7 +1859,11 @@ fi
    if [ -e output/timing_errors ]; then
       echo "***Warning: cases with > 200% increased run-time"        >> $TIME_LOG
       cat output/timing_errors  | awk -F',' '{print $1,$3,"-->",$4}' >> $TIME_LOG
-      echo ""                         >> $TIME_LOG
+      echo ""                                                        >> $TIME_LOG
+      echo ""                                                        >> $WARNING_LOG
+      echo "***Warning: cases with > 200% increased run-time"        >> $WARNING_LOG
+      cat output/timing_errors  | awk -F',' '{print $1,$3,"-->",$4}' >> $WARNING_LOG
+      echo ""                                                        >> $WARNING_LOG
    fi
 
    # Check for warnings and errors
