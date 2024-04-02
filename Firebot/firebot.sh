@@ -642,6 +642,28 @@ CP()
 }
 
 #---------------------------------------------
+#                   CHECKOUT_REPO
+#---------------------------------------------
+
+CHECKOUT_REPO()
+{
+ local_branch=$1
+ local_repo=$2
+ local_rev=$3
+ local_tag=$4
+
+ cd $local_repo
+ if [ "$use_only_tags" == "" ]; then
+   git checkout -b $local_branch $local_rev         >> $OUTPUT_DIR/stage1_clone 2>&1
+   if [ "$local_tag" != "" ]; then
+     git tag -a $local_tag -m "tag for $local_tag"  >> $OUTPUT_DIR/stage1_clone 2>&1
+   fi
+ else
+   git checkout -b $local_branch $local_tag         >> $OUTPUT_DIR/stage1_clone 2>&1
+ fi
+}
+
+#---------------------------------------------
 #                   compile_smv_utilities
 #---------------------------------------------
 
@@ -1066,6 +1088,104 @@ check_fds_pictures()
       echo "" >> $WARNING_LOG
    fi
 }
+#---------------------------------------------
+#                   run_python_setup
+#---------------------------------------------
+
+run_python_setup()
+{
+   echo Python
+   echo "   setup environment"
+   cd $botrepo/Firebot/
+   source ./setup_python3.sh > $OUTPUT_DIR/stage7_python_setup 2>&1
+}
+
+#---------------------------------------------
+#                   check_python_setup
+#---------------------------------------------
+
+check_python_setup()
+{
+   # Check that python environment has been setup
+   python_success=true
+   if [[ `grep "Error" $OUTPUT_DIR/stage7_python_setup` != "" ]]; then
+     python_success=false
+   fi
+   if [[ `grep "Hello World" $OUTPUT_DIR/stage7_python_setup` == "" ]]; then
+     python_success=false
+   fi
+   if [ $python == false ]; then
+      echo "Errors from Stage 7 - Python failed to be setup" >> $ERROR_LOG
+      grep "Error" $OUTPUT_DIR/stage7_python_setup           >> $ERROR_LOG
+      if [[ `grep "Hello World" $OUTPUT_DIR/stage7_python_setup` == "" ]]; then
+        echo "python hello world script failed to run"       >> $ERROR_LOG
+     fi
+   fi
+}
+
+#---------------------------------------------
+#                   run_python_verification
+#---------------------------------------------
+
+run_python_verification()
+{
+   echo Python verification plots
+   cd $fdsrepo/Utilities/Python
+   python hello_world.py > $OUTPUT_DIR/stage7a_python_verification 2>&1
+}
+
+#---------------------------------------------
+#                   check_python_verification
+#---------------------------------------------
+
+check_python_verification()
+{
+   # Check that python environment has been setup
+   python_verification_success=true
+   if [[ `grep "Error" $OUTPUT_DIR/stage7a_python_verification` != "" ]]; then
+     python_verification_success=false
+   fi
+   if [[ `grep "Hello World" $OUTPUT_DIR/stage7a_python_verification` == "" ]]; then
+     python_verification_success=false
+   fi
+   if [ $python_verification_success == false ]; then
+     echo "Errors from Stage 7a - Python plotting and statistics (verification):" >> $ERROR_LOG
+     grep -B 5 -A 50 "Error" $OUTPUT_DIR/stage7a_python_verification | tr -cd '\11\12\15\40-\176' >> $ERROR_LOG
+     echo "" >> $ERROR_LOG
+    fi
+}
+
+#---------------------------------------------
+#                   run_python_validation
+#---------------------------------------------
+
+run_python_validation()
+{
+   echo Python validation plots
+   cd $fdsrepo/Utilities/Python
+   python hello_world.py > $OUTPUT_DIR/stage7b_python_validation 2>&1
+}
+
+#---------------------------------------------
+#                   check_python_verification
+#---------------------------------------------
+
+check_python_validation()
+{
+   # Check that python environment has been setup
+   python_validation_success=true
+   if [[ `grep "Error" $OUTPUT_DIR/stage7b_python_validation` != "" ]]; then
+     python_validation_success=false
+   fi
+   if [[ `grep "Hello World" $OUTPUT_DIR/stage7b_python_validation` == "" ]]; then
+     python_validation_success=false
+   fi
+   if [ $python_validation_success == false ]; then
+     echo "Errors from Stage 7b - Python plotting and statistics (validation):" >> $ERROR_LOG
+     grep -B 5 -A 50 "Error" $OUTPUT_DIR/stage7b_python_validation | tr -cd '\11\12\15\40-\176' >> $ERROR_LOG
+     echo "" >> $ERROR_LOG
+    fi
+}
 
 #---------------------------------------------
 #                   run_matlab_license_test
@@ -1073,13 +1193,13 @@ check_fds_pictures()
 
 run_matlab_license_test()
 {
+   DEBUG="strace -t -T -f -e trace=network -o $OUTPUT_DIR/stage7_matlab_strace"
    echo Matlab
    echo "   license test"
    # Run simple test to see if Matlab license is available
    cd $fdsrepo/Utilities/Matlab
    date -Iseconds &> $OUTPUT_DIR/stage7_matlab_license
-#   strace -t -T -f -e trace=network -o $OUTPUT_DIR/stage7_matlab_strace matlab -nodisplay -r "try, disp('Running Matlab License Check'), catch, disp('License Error'), err = lasterror, err.message, err.stack, end, exit" >> $OUTPUT_DIR/stage7_matlab_license 2>&1
-   matlab -nodisplay -r "try, disp('Running Matlab License Check'), catch, disp('License Error'), err = lasterror, err.message, err.stack, end, exit" >> $OUTPUT_DIR/stage7_matlab_license 2>&1
+   $DEBUG matlab -nodisplay -r "try, disp('Running Matlab License Check'), catch, disp('License Error'), err = lasterror, err.message, err.stack, end, exit" >> $OUTPUT_DIR/stage7_matlab_license 2>&1
    date -Iseconds >> $OUTPUT_DIR/stage7_matlab_license 2>&1
 #   matlab -nodisplay -r "try, disp('Running Matlab License Check'), catch, disp('License Error'), err = lasterror, err.message, err.stack, end, exit" &> $OUTPUT_DIR/stage7_matlab_license
 }
@@ -1137,7 +1257,7 @@ check_matlab_license_server()
 
 run_matlab_verification()
 {
-   echo "   verification plots"
+   echo "   matlab verification plots"
    # Run Matlab plotting script
    cd $fdsrepo/Utilities/Matlab
    matlab -nodisplay -r "try, disp('Running Matlab Verification script'), FDS_verification_script, catch, disp('Error'), err = lasterror, err.message, err.stack, end, exit" &> $OUTPUT_DIR/stage7a_verification
@@ -2060,9 +2180,10 @@ MPI_TYPE=ompi
 BOPT=
 GITURL=
 MAKE_SUMMARY=
+CLONEFILE=
 
 #*** parse command line arguments
-while getopts 'b:BcCdDJm:Mp:q:R:S:sTuUV:x:X:y:Y:w:W:j:' OPTION
+while getopts 'b:BcCdDJm:Mp:q:R:S:sTuUV:x:X:y:Y:w:W:z' OPTION
 do
 case $OPTION in
   b)
@@ -2166,6 +2287,9 @@ case $OPTION in
   W)
    WEB_ROOT="$OPTARG"
    ;;
+  z)
+   CLONEFILE="1"
+   ;;
 esac
 done
 shift $(($OPTIND-1))
@@ -2234,6 +2358,14 @@ outrepo=$repo/out
 exprepo=$repo/exp
 cadrepo=$repo/cad
 
+if [ "$CLONEFILE" != "" ]; then
+  CLONEFILE=$botrepo/Bundlebot/release/BUILD_config.sh
+  if [ ! -x $CLONEFILE ]; then
+    echo "***error: $CLONEFILE does not exist or is not executable"
+    CLONEFILE=
+  fi
+fi
+
 if [ "$OPENMPTEST" == "" ]; then
   size=_64
   GNU_MPI=mpi_
@@ -2288,26 +2420,31 @@ if [[ "$CLONE_REPOS" != "" ]]; then
     ./setup_repos.sh $FORCECLONE -F > $OUTPUT_DIR/stage1_clone 2>&1
   fi
   if [ "$CLONE_REPOS" != "master" ]; then
-    FDSBRANCH=$CLONE_REPOS
-    cd $fdsrepo
-    if [ "$use_only_tags" == "" ]; then
-      git checkout -b $FDSBRANCH $FDS_REV >> $OUTPUT_DIR/stage1_clone 2>&1
-      if [ "$FDS_TAG" != "" ]; then
-        git tag -a $FDS_TAG -m "tag for $FDS_TAG"  >> $OUTPUT_DIR/stage1_clone 2>&1
-      fi
-    else
-      git checkout -b $FDSBRANCH $FDS_TAG >> $OUTPUT_DIR/stage1_clone 2>&1
-    fi
+    if [ "$CLONEFILE" == "" ]; then
+      FDSBRANCH=$CLONE_REPOS
+      CHECKOUT_REPO $FDSBRANCH $fdsrepo $FDS_REV $FDS_TAG 
 
-    SMVBRANCH=$CLONE_REPOS
-    cd $smvrepo
-    if [ "$use_only_tags" == "" ]; then
-      git checkout -b $SMVBRANCH $SMV_REV >> $OUTPUT_DIR/stage1_clone 2>&1
-      if [ "$SMV_TAG" != "" ]; then
-        git tag -a $SMV_TAG -m "tag for $SMV_TAG"  >> $OUTPUT_DIR/stage1_clone 2>&1
-      fi
+      SMVBRANCH=$CLONE_REPOS
+      CHECKOUT_REPO $SMVBRANCH $smvrepo $SMV_REV $SMV_TAG 
     else
-      git checkout -b $SMVBRANCH $SMV_TAG >> $OUTPUT_DIR/stage1_clone 2>&1
+      source $CLONEFILE 
+      FDSBRANCH=$CLONE_REPOS
+      CHECKOUT_REPO $FDSBRANCH $fdsrepo $BUNDLE_FDS_REVISION  $BUNDLE_FDS_TAG 
+
+      SMVBRANCH=$CLONE_REPOS
+      CHECKOUT_REPO $SMVBRANCH $smvrepo $BUNDLE_SMV_REVISION  $BUNDLE_SMV_TAG 
+
+      CADBRANCH=$CLONE_REPOS
+      CHECKOUT_REPO $CADBRANCH $cadrepo $BUNDLE_CAD_REVISION  $BUNDLE_CAD_TAG 
+
+      EXPBRANCH=$CLONE_REPOS
+      CHECKOUT_REPO $EXPBRANCH $exprepo $BUNDLE_EXP_REVISION  $BUNDLE_EXP_TAG 
+      
+      FIGBRANCH=$CLONE_REPOS
+      CHECKOUT_REPO $FIGBRANCH $figrepo $BUNDLE_FIG_REVISION  $BUNDLE_FIG_TAG 
+
+      OUTBRANCH=$CLONE_REPOS
+      CHECKOUT_REPO $OUTBRANCH $outrepo $BUNDLE_OUT_REVISION  $BUNDLE_OUT_TAG 
     fi
   fi
   ARCHIVE_REPO_SIZES=1
@@ -2726,6 +2863,25 @@ MATLAB_beg=`GET_TIME`
 
 ###*** Stage 7a ###
 
+#*** python verification plots
+
+    run_python_setup
+    check_python_setup
+    if [ $python_success == true ]; then
+      run_python_verification
+      check_python_verification
+    fi
+
+#*** python validation plots
+#    only need to setup python once
+
+    if [ $python_success == true ]; then
+      run_python_validation
+      check_python_validation
+    fi
+
+#*** matlab verification plots
+
     check_matlab_license_server
     if [ $matlab_success == true ]; then
       run_matlab_verification
@@ -2734,6 +2890,8 @@ MATLAB_beg=`GET_TIME`
     fi
 
 ###*** Stage 7b ###
+
+#*** matlab validation plots
 
     check_matlab_license_server
     if [ $matlab_success == true ]; then
