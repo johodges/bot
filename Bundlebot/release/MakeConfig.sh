@@ -2,12 +2,12 @@
 # This script builds the configuration scripts used to build the bundles
 # usage:
 # build both bash and dos config scripts
-# ./MakeBuild_config.sh x.y.z BOTH
+# ./MakeBuild_config.sh x.y.z
 
-# build both bash config script
+# build bash config script
 # ./Make_config.sh x.y.z BASH
 
-# build both dos config script
+# build dos config script
 # ./Make_config.sh x.y.z  DOS
 
 # where x.y.z is the version being bundled
@@ -15,7 +15,10 @@
 base_tag=$1
 OS=$2
 
-if [ "$OS" == "BOTH" ]; then
+if [ "$OS" == "" ]; then
+  BOTVERSION=`git describe --dirty --long`
+  BOTREVISION=`git rev-parse --short HEAD`
+  export BOTVERSION BOTREVISION
   ./MakeConfig.sh $base_tag BASH > config.sh
   cp config.sh history/config_${base_tag}.sh
   ./MakeConfig.sh $base_tag DOS  > config.bat
@@ -44,7 +47,7 @@ else
 fi
 export HEAD COMMENT EXPORT
 
-repos="cad exp fds fig out smv"
+repos="bot cad exp fds fig out smv"
 CURDIR=`pwd`
 gitroot=$CURDIR/../../..
 cd $gitroot
@@ -65,6 +68,10 @@ do
 cd $gitroot/$repo
 REPOVERSION=`git describe --dirty --long`
 REVISION=`git rev-parse --short HEAD`
+if [ "$repo" == "bot" ]; then
+  REPOVERSION=$BOTVERSION
+  REVISION=$BOTREVISION
+fi
 REPO=$(echo "$repo" | awk '{print toupper($0)}')
 TAG=$REPO-${base_tag}
 cat << EOF

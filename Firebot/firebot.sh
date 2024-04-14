@@ -1131,7 +1131,7 @@ run_python_verification()
 {
    echo Python verification plots
    cd $fdsrepo/Utilities/Python
-   python hello_world.py > $OUTPUT_DIR/stage7a_python_verification 2>&1
+   python FDS_verification_script.py > $OUTPUT_DIR/stage7a_python_verification 2>&1
 }
 
 #---------------------------------------------
@@ -1145,9 +1145,9 @@ check_python_verification()
    if [[ `grep "Error" $OUTPUT_DIR/stage7a_python_verification` != "" ]]; then
      python_verification_success=false
    fi
-   if [[ `grep "Hello World" $OUTPUT_DIR/stage7a_python_verification` == "" ]]; then
-     python_verification_success=false
-   fi
+   # if [[ `grep "Hello World" $OUTPUT_DIR/stage7a_python_verification` == "" ]]; then
+   #   python_verification_success=false
+   # fi
    if [ $python_verification_success == false ]; then
      echo "Errors from Stage 7a - Python plotting and statistics (verification):" >> $ERROR_LOG
      grep -B 5 -A 50 "Error" $OUTPUT_DIR/stage7a_python_verification | tr -cd '\11\12\15\40-\176' >> $ERROR_LOG
@@ -2181,11 +2181,15 @@ BOPT=
 GITURL=
 MAKE_SUMMARY=
 CLONEFILE=
+DISABLEPUSH=
 
 #*** parse command line arguments
-while getopts 'b:BcCdDJm:Mp:q:R:S:sTuUV:x:X:y:Y:w:W:z' OPTION
+while getopts 'ab:BcCdDJm:Mp:q:R:S:sTuUV:x:X:y:Y:w:W:z' OPTION
 do
 case $OPTION in
+  a)
+   DISABLEPUSH="-D"
+   ;;
   b)
    BOPT=1
    BRANCH="$OPTARG"
@@ -2359,7 +2363,7 @@ exprepo=$repo/exp
 cadrepo=$repo/cad
 
 if [ "$CLONEFILE" != "" ]; then
-  CLONEFILE=$botrepo/Bundlebot/release/BUILD_config.sh
+  CLONEFILE=$botrepo/Bundlebot/release/config.sh
   if [ ! -x $CLONEFILE ]; then
     echo "***error: $CLONEFILE does not exist or is not executable"
     CLONEFILE=
@@ -2414,10 +2418,10 @@ if [[ "$CLONE_REPOS" != "" ]]; then
   cd $botrepo/Scripts
   if [ "$CLONE_FDSSMV" != "" ]; then
    # only clone the fds and smv repos - used when just compiling the fds and smv apps
-    ./setup_repos.sh $FORCECLONE -T > $OUTPUT_DIR/stage1_clone 2>&1
+    ./setup_repos.sh $DISABLEPUSH $FORCECLONE -T > $OUTPUT_DIR/stage1_clone 2>&1
   else
    # clone all repos
-    ./setup_repos.sh $FORCECLONE -F > $OUTPUT_DIR/stage1_clone 2>&1
+    ./setup_repos.sh $DISABLEPUSH $FORCECLONE -F > $OUTPUT_DIR/stage1_clone 2>&1
   fi
   if [ "$CLONE_REPOS" != "master" ]; then
     if [ "$CLONEFILE" == "" ]; then
