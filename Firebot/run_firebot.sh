@@ -213,14 +213,11 @@ VALIDATION=
 OPENMPTEST=
 RESOURCE_MANAGER=
 CLONEFILE=
-DISABLEPUSH=
 #*** parse command line options
-while getopts 'abBcCdDfFhHJkm:MnNo:OPq:r:R:S:TuUvV:w:W:x:X:y:Y:z' OPTION
+
+while getopts 'bBcCdDfFhHJkm:MnNo:OPq:r:R:S:TuUvV:w:W:x:X:y:Y:z' OPTION
 do
 case $OPTION  in
-  a)
-   DISABLEPUSH="-D"
-   ;;
   b)
    BRANCH=current
    ;;
@@ -447,7 +444,7 @@ if [ "$KILL_FIREBOT" == "1" ]; then
       ./killppids.sh ../Firebot/scriptfiles
       cd $CURDIR
     else
-      JOBIDS=`qstat -a | grep $PREFIX | awk -v user="$USER" '{if($2==user){print $1}}' | awk -F'.' '{print $1}'`
+      JOBIDS=`squeue | grep $PREFIX | awk -v user="$USER" '{if($4==user){print $1}}' | awk -F'.' '{print $1}'`
       if [ "$JOBIDS" != "" ]; then
         echo killing firebot jobs with Id:$JOBIDS
         qdel $JOBIDS
@@ -569,7 +566,7 @@ else
 fi
 touch $firebot_pid
 firebot_status=0
-$ECHO  ./firebot.sh -p $firebot_pid $UPDATEREPO $DISABLEPUSH $INTEL $OPENMPTEST $BUILD_ONLY $FORCECLONE $BRANCH $DEBUG_MODE $MANUALS_MATLAB_ONLY $FDS_REV $FDS_TAG $SMV_REV $SMV_TAG $UPLOADGUIDES $CLEANREPO $QUEUE $RESOURCE_MANAGER $SKIPMATLAB $CLONE_REPOS $CLONE_FDSSMV $VALIDATION $CLONEFILE $EMAIL $WEB_ROOT $WEB_DIR "$@"
+$ECHO  ./firebot.sh -p $firebot_pid $UPDATEREPO $INTEL $OPENMPTEST $BUILD_ONLY $FORCECLONE $BRANCH $DEBUG_MODE $MANUALS_MATLAB_ONLY $FDS_REV $FDS_TAG $SMV_REV $SMV_TAG $UPLOADGUIDES $CLEANREPO $QUEUE $RESOURCE_MANAGER $SKIPMATLAB $CLONE_REPOS $CLONE_FDSSMV $VALIDATION $CLONEFILE $EMAIL $WEB_ROOT $WEB_DIR "$@"
 firebot_status=$?
 if [ -e $firebot_pid ]; then
   rm -f $firebot_pid
